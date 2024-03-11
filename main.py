@@ -14,9 +14,9 @@ def main():
     gt = utils.ivecs_read("sift/sift_groundtruth.ivecs")
     ind = index.Index("IVF4096,Flat", xt, xb, xq, gt)
     
-    ind.simulate_queries(cache_size=2048)
+    ind.simulate_queries(cache_size=2048, nprobe=16)
 
-    ind.search_and_report_recall()
+    ind.search_and_report_recall(nprobe=16)
     
     
 

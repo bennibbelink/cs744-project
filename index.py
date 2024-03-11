@@ -23,21 +23,21 @@ class Index:
         self.xq = xq
         self.gt = gt
 
-    def find_nearest_centroids(self):
+    def find_nearest_centroids(self, k):
         centroids = self.index.quantizer.reconstruct_n(0, self.index.nlist)
-        _, centroid_idxs = faiss.knn(self.xq, centroids, 1)
-        return [x[0] for x in centroid_idxs]
+        _, centroid_idxs = faiss.knn(self.xq, centroids, k)
+        return centroid_idxs
 
-    def search_and_report_recall(self):
-        self.index.nprobe = 16
+    def search_and_report_recall(self, nprobe):
+        self.index.nprobe = nprobe
         _, I = self.index_ivf.search(self.xq, 1)
         recall_at_1 = (I[:, :1] == self.gt[:, :1]).sum() / float(self.xq.shape[0])
         print("recall@1: %.3f" % recall_at_1)
 
-    def simulate_queries(self, cache_size):
+    def simulate_queries(self, cache_size, nprobe):
         idx_cache = [] # index 0 is the MRU centroid
         num_disk_reads = 0
-        centroid_idxs = self.find_nearest_centroids()
+        centroid_idxs = self.find_nearest_centroids(nprobe).flatten()
         for centroid in centroid_idxs:
             if centroid in idx_cache: # cluster is in cache
                 idx_cache.remove(centroid)
