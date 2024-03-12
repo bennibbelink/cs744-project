@@ -37,16 +37,16 @@ class Index:
 
     def simulate_queries(self, cache_size, nprobe):
         idx_cache = [] # index 0 is the MRU centroid
-        num_disk_reads = 0
-        n_points_read = 0
+        n_disk_reads = 0
+        n_vectors_read_from_disk = 0
         centroid_idxs = self.find_nearest_centroids(nprobe).flatten()
         list_sizes = self.get_list_sizes()
         for centroid in centroid_idxs:
             if centroid in idx_cache: # cluster is in cache
                 idx_cache.remove(centroid)
             else:
-                num_disk_reads += 1
-                n_points_read += list_sizes[centroid]
+                n_disk_reads += 1
+                n_vectors_read_from_disk += list_sizes[centroid]
 
             # insert this centroid at front of list
             idx_cache.insert(0, centroid) 
@@ -58,14 +58,14 @@ class Index:
                 popped = idx_cache.pop()
                 print(f'Evicting centroid {popped} from cache')
 
-        cache_hits = len(centroid_idxs) - num_disk_reads
+        cache_hits = len(centroid_idxs) - n_disk_reads
         unique_centroids_accessed = Counter(centroid_idxs).keys()
         
-        unique_points_read = sum([list_sizes[x] for x in unique_centroids_accessed])
+        unique_vectors_read = sum([list_sizes[x] for x in unique_centroids_accessed])
         print('Simulation results:')
         print(f'\t{cache_hits} cache hits')
-        print(f'\t{num_disk_reads} disk reads ({len(unique_centroids_accessed)} unavoidable)')
-        print(f'\t{n_points_read} vectors read from disk ({unique_points_read} unavoidable)')
+        print(f'\t{n_disk_reads} disk reads ({len(unique_centroids_accessed)} unavoidable)')
+        print(f'\t{n_vectors_read_from_disk} vectors read from disk ({unique_vectors_read} unavoidable)')
    
     def get_list_sizes(self):
         invlists = self.index_ivf.invlists
