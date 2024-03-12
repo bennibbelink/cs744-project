@@ -1,6 +1,7 @@
 import faiss
 import os
 from collections import Counter
+
 class Index:
 
     def __init__(self, index_type, xt, xb, xq, gt):
@@ -37,23 +38,39 @@ class Index:
     def simulate_queries(self, cache_size, nprobe):
         idx_cache = [] # index 0 is the MRU centroid
         num_disk_reads = 0
+        n_points_read = 0
         centroid_idxs = self.find_nearest_centroids(nprobe).flatten()
+        list_sizes = self.get_list_sizes()
         for centroid in centroid_idxs:
             if centroid in idx_cache: # cluster is in cache
                 idx_cache.remove(centroid)
             else:
                 num_disk_reads += 1
+                n_points_read += list_sizes[centroid]
 
             # insert this centroid at front of list
             idx_cache.insert(0, centroid) 
 
-            if len(idx_cache) > cache_size: # over cache size limit
+            # calculate how many vectors are stored in the cache now
+            new_cache_size = sum([list_sizes[x] for x in idx_cache])
+
+            if new_cache_size > cache_size: # over cache size limit
                 popped = idx_cache.pop()
                 print(f'Evicting centroid {popped} from cache')
 
         cache_hits = len(centroid_idxs) - num_disk_reads
-        num_centroids_accessed = len(Counter(centroid_idxs).keys())
+        unique_centroids_accessed = Counter(centroid_idxs).keys()
+        
+        unique_points_read = sum([list_sizes[x] for x in unique_centroids_accessed])
         print('Simulation results:')
         print(f'\t{cache_hits} cache hits')
-        print(f'\t{num_disk_reads} disk reads ({num_centroids_accessed} unavoidable)')
-
+        print(f'\t{num_disk_reads} disk reads ({len(unique_centroids_accessed)} unavoidable)')
+        print(f'\t{n_points_read} vectors read from disk ({unique_points_read} unavoidable)')
+   
+    def get_list_sizes(self):
+        invlists = self.index_ivf.invlists
+        d = {}
+        for i in range(invlists.nlist):
+            d[i] = invlists.list_size(i)
+        return d
+        
