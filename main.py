@@ -1,6 +1,6 @@
 import utils
 import index
-from cache import LRUCache
+from cache import LRUCache, PinCache
 import numpy as np
 import faiss.contrib.inspect_tools as tools
 
@@ -15,7 +15,9 @@ def main():
     cache_size = 100000
 
     # cache_size is in "number of vectors"
-    cache = LRUCache(cache_size, ind.get_list_sizes())
+    cache = LRUCache(capacity=cache_size, list_sizes=ind.get_list_sizes())
+    # pincount is in "number of clusters"
+    cache = PinCache(capacity=cache_size, list_sizes=ind.get_list_sizes(), pincount=10)
     ind.simulate_cache(cache=cache, nprobe=nprobe)
 
     print("search_and_return_centroids...")
