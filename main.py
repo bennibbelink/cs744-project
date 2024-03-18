@@ -7,11 +7,9 @@ import faiss.contrib.inspect_tools as tools
 
 def main():
 
-    utils.get_sift()
-    xt = utils.fvecs_read("sift/sift_learn.fvecs")
-    xb = utils.fvecs_read("sift/sift_base.fvecs")
-    xq = utils.fvecs_read("sift/sift_query.fvecs")
-    gt = utils.ivecs_read("sift/sift_groundtruth.ivecs")
+    # xt, xb, xq, gt = utils.get_sift()
+    xt, xb, xq, gt = utils.get_glove(50)
+
     ind = index.Index("IVF4096,Flat", xt, xb, xq, gt)
 
     nprobe = 16
