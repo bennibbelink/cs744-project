@@ -7,8 +7,8 @@ import faiss.contrib.inspect_tools as tools
 
 def main():
 
-    xt, xb, xq, gt = utils.get_sift()
-    xt, xb, xq, gt = utils.get_glove(25)
+    # xt, xb, xq, gt = utils.get_sift()
+    xt, xb, xq, gt = utils.get_glove(50)
 
     ind = index.Index("IVF4096,Flat", xt, xb, xq, gt)
 

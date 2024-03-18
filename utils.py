@@ -3,7 +3,6 @@ import os
 import tarfile
 import numpy as np
 import h5py
-import requests
 
 def ivecs_read(fname):
     a = np.fromfile(fname, dtype='int32')
