@@ -12,12 +12,9 @@ class Index:
             index = faiss.read_index(f'indexes/{dataset}/{index_type}.index', faiss.IO_FLAG_MMAP)
         except:
             index = faiss.index_factory(xt.shape[1], index_type)
-            print(f"Training {index_type} index on {dataset}...", time.time())
+            print(f"Training {index_type} index on {dataset}...")
             index.train(xt)
-            print("done training", time.time())
-            faiss.write_index(index, f'indexes/{dataset}/{index_type}.trainedindex')
             index.add(xb)
-            print("done adding", time.time())
             print(f"Write indexes/{dataset}/{index_type}.addedindex")
             if not os.path.exists(f'indexes/{dataset}'):
                 os.makedirs(f'indexes/{dataset}', exist_ok=True)
