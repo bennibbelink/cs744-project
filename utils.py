@@ -34,7 +34,7 @@ def get_glove(dims):
     filename = f'glove-{dims}-angular.hdf5'
     if not os.path.exists(filename):
         print(f'Downloading glove data as {filename}...')
-        urllib.request.urlretrieve('http://ann-benchmarks.com/glove-25-angular.hdf5', filename)
+        urllib.request.urlretrieve(f'http://ann-benchmarks.com/glove-{dims}-angular.hdf5', filename)
     with h5py.File(filename, "r") as f:
         _distances = ['distances']
         neighbors = np.array(f['neighbors'])
