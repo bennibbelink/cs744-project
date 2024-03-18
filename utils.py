@@ -2,6 +2,8 @@ import urllib.request
 import os
 import tarfile
 import numpy as np
+import h5py
+import requests
 
 def ivecs_read(fname):
     a = np.fromfile(fname, dtype='int32')
@@ -21,4 +23,22 @@ def get_sift():
         print(f'Extracting sift files to ./{dir}...')
         with tarfile.open(file, 'r:gz') as tar:
             tar.extractall()
+    xt = fvecs_read("sift/sift_learn.fvecs")
+    xb = fvecs_read("sift/sift_base.fvecs")
+    xq = fvecs_read("sift/sift_query.fvecs")
+    gt = ivecs_read("sift/sift_groundtruth.ivecs")
+    return xt, xb, xq, gt
+
+# dims should be one of [25, 50, 100, 200]
+def get_glove(dims):
+    filename = f'glove-{dims}-angular.hdf5'
+    if not os.path.exists(filename):
+        print(f'Downloading glove data as {filename}...')
+        urllib.request.urlretrieve('http://ann-benchmarks.com/glove-25-angular.hdf5', filename)
+    with h5py.File(filename, "r") as f:
+        _distances = ['distances']
+        neighbors = np.array(f['neighbors'])
+        test = np.array(f['test'])
+        train = np.array(f['train'])
+        return train, train, test, neighbors
 
