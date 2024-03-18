@@ -2,10 +2,11 @@ import faiss
 import os
 from collections import Counter
 import numpy as np
+import numpy.typing as npt
 
 class Index:
 
-    def __init__(self, index_type, xt, xb, xq, gt):
+    def __init__(self, index_type: str, xt: npt.NDArray, xb: npt.NDArray, xq: npt.NDArray, gt: npt.NDArray):
         try:
             index = faiss.read_index('indexes/' + index_type + '.index', faiss.IO_FLAG_MMAP)
         except:
@@ -25,15 +26,16 @@ class Index:
         self.xq = xq
         self.gt = gt
 
-    def search(self, nprobe):
+    def search(self, nprobe: int) -> npt.NDArray:
+        """ performs the standard search on xq, returns the labels as a 1D array """
         self.index_ivf.nprobe = nprobe
         _, I = self.index_ivf.search(self.xq, k=1)
         labels = I[:, :1]
         # print(f'labels: {labels.size} - {np.min(labels)} -> {np.max(labels)}')
         return labels
 
-    # returns the closest centroid for each query vector
-    def search_centroid(self):
+    def search_centroid(self) -> npt.NDArray:
+        """ finds the closest centroid to each vector in xq, returns a 1D array with the centroid ids"""
         n = len(self.xq)
         centroid_ids = np.full(n, fill_value=-1, dtype=np.int64)
         faiss.search_centroid(
@@ -44,7 +46,10 @@ class Index:
         )
         return centroid_ids
 
-    def search_and_return_centroids(self, nprobe):
+    def search_and_return_centroids(self, nprobe: int) -> tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
+        """ returns a tuple of 3 1D arrays corresponding to: closest centroid to query vector,
+            actual centroid of NN found, and label of NN
+        """
         self.index_ivf.nprobe = nprobe # how many clusters to search
         n = len(self.xq)
         k = 1
@@ -68,23 +73,30 @@ class Index:
         # print(f'labels: {labels.shape} - {np.min(labels)} -> {np.max(labels)}')
         return query_centroid_ids, result_centroid_ids, labels
     
-    def get_list_sizes(self):
+    def get_list_sizes(self) -> dict[int, int]:
+        """ returns a dictionary containing the size of each inverted list,
+            size = # of vectors
+        """
         invlists = self.index_ivf.invlists
         d = {}
         for i in range(invlists.nlist):
             d[i] = invlists.list_size(i)
         return d
     
-    def report_recall(self, ids):
+    def report_recall(self, ids: npt.NDArray) -> None:
+        """ compares ids to gt, reports recall to stdout """
         recall_at_1 = (ids == self.gt[:, :1]).sum() / float(self.xq.shape[0])
         print("recall@1: %.3f" % recall_at_1)
 
-    def find_nearest_centroids(self, k):
+    def find_nearest_centroids(self, k: int) -> npt.NDArray:
+        """ our own method that uses faiss.knn to return the k closest centroids to each query vector\n
+            returns an nxk array
+        """
         centroids = self.index.quantizer.reconstruct_n(0, self.index.nlist)
         _, centroid_idxs = faiss.knn(self.xq, centroids, k)
         return centroid_idxs
     
-    def simulate_cache(self, cache_size, nprobe):
+    def simulate_cache(self, cache_size: int, nprobe: int) -> None:
         idx_cache = [] # index 0 is the MRU centroid
         n_disk_reads = 0
         n_vectors_read_from_disk = 0

@@ -2,6 +2,7 @@ import urllib.request
 import os
 import tarfile
 import numpy as np
+import numpy.typing as npt
 import h5py
 
 def ivecs_read(fname):
@@ -12,7 +13,8 @@ def ivecs_read(fname):
 def fvecs_read(fname):
     return ivecs_read(fname).view('float32')
 
-def get_sift():
+def get_sift() -> tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray]:
+    """ Returns (xt, sb, xq, gt). Downloads dataset if doesn't already exist locally """
     dir = 'sift'
     file = 'sift1M.tar.gz'
     if not os.path.exists(file):
@@ -29,7 +31,11 @@ def get_sift():
     return xt, xb, xq, gt
 
 # dims should be one of [25, 50, 100, 200]
-def get_glove(dims):
+def get_glove(dims: int) -> tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray]:
+    """ 
+        Returns (xt, sb, xq, gt). Downloads dataset if doesn't already exist locally \n
+        dims argument should be one of [25, 50, 100, 200]
+    """
     filename = f'glove-{dims}-angular.hdf5'
     if not os.path.exists(filename):
         print(f'Downloading glove data as {filename}...')
