@@ -1,7 +1,16 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import numpy as np
 
 class Cache(ABC):
+
+    @abstractmethod
+    def setup(self, index) -> None:
+        pass
+
+    @abstractmethod
+    def reset(self) -> None:
+        pass
+
     @abstractmethod
     def access_item(self, cid: int) -> None:
         pass
@@ -26,12 +35,27 @@ class Cache(ABC):
     def num_vectors_read(self) -> int:
         pass
 
+    @abstractmethod
+    def to_string(self) -> str:
+        pass
+
 
 class LRUCache(Cache):
 
-    def __init__(self, capacity: int, list_sizes: dict[int, int]):
+    def __init__(self, capacity: int):
         self.capacity = capacity
-        self.list_sizes = list_sizes
+        self.list_sizes = None
+        self.centroids = np.empty(0)
+        self.hits = 0
+        self.misses = 0
+        self.vectors_read = 0
+
+    # must be run before using the cache!!
+    def setup(self, index):
+        self.list_sizes = index.get_list_sizes()
+
+    def reset(self):
+        self.list_sizes = None
         self.centroids = np.empty(0)
         self.hits = 0
         self.misses = 0
@@ -67,28 +91,42 @@ class LRUCache(Cache):
     def num_vectors_read(self) -> int:
         return self.vectors_read
     
+    def to_string(self) -> str:
+        return f"LRUCache (capacity={self.get_capacity()})"
+    
 
 class PinCache(Cache):
-    def __init__(self, capacity: int, list_sizes: dict[int, int], pincount: int):
+    def __init__(self, capacity: int, pincount: int):
         self.capacity = capacity
-        self.list_sizes = list_sizes
+        self.list_sizes = None
         self.pincount = pincount
+        self.hits = 0
+        self.misses = 0
+        self.vectors_read = 0
 
-        sorted_dict = dict(sorted(list_sizes.items(), key=lambda item: item[1], reverse=True))
+    def setup(self, index):
+        self.list_sizes = index.get_list_sizes()
+        sorted_dict = dict(sorted(self.list_sizes.items(), key=lambda item: item[1], reverse=True))
         # Extract keys of the top pincount highest values
-        top_keys = list(sorted_dict.keys())[:pincount]
+        top_keys = list(sorted_dict.keys())[:self.pincount]
 
         # initialize cache with pinned centroids
         # set the miss/read counts appropriately
         self.centroids = np.array(top_keys)
-        self.hits = 0
-        self.misses = pincount
-        self.vectors_read = 0
+        self.misses = self.pincount
         for cid in top_keys:
-            self.vectors_read += list_sizes[cid]
+            self.vectors_read += self.list_sizes[cid]
 
         if self.get_size() > self.capacity:
             raise Exception('Error: Pinned clusters are larger than cache capacity')
+
+    def reset(self):
+        self.list_sizes = None
+        self.centroids = np.empty(0)
+        self.hits = 0
+        self.misses = 0
+        self.vectors_read = 0
+
 
     def access_item(self, cid: int) -> None:
         if cid in self.centroids[:self.pincount]: # cid is pinned
@@ -122,3 +160,8 @@ class PinCache(Cache):
     
     def num_vectors_read(self) -> int:
         return self.vectors_read
+    
+    def to_string(self) -> str:
+        return f"PinCache (capacity={self.get_capacity()}, pincount={self.pincount})"
+    
+    

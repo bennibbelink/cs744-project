@@ -18,7 +18,8 @@ class Index:
             if not os.path.exists(f'indexes/{dataset}'):
                 os.makedirs(f'indexes/{dataset}', exist_ok=True)
             faiss.write_index(index, f'indexes/{dataset}/{index_type}.index')
-        
+        self.index_type = index_type
+        self.dataset = dataset
         self.index = index
         self.index_ivf = faiss.extract_index_ivf(index)
         self.xb = xb
@@ -84,10 +85,13 @@ class Index:
             d[i] = invlists.list_size(i)
         return d
     
-    def report_recall(self, ids: npt.NDArray) -> None:
+    def report_recall(self, ids: npt.NDArray, verbose=False) -> float:
         """ compares ids to gt, reports recall to stdout """
         recall_at_1 = (ids == self.gt[:, :1]).sum() / float(self.xq.shape[0])
-        print("recall@1: %.3f" % recall_at_1)
+        if verbose:
+            print("recall@1: %.3f" % recall_at_1)
+        return recall_at_1
+
 
     def find_nearest_centroids(self, k: int) -> npt.NDArray:
         """ our own method that uses faiss.knn to return the k closest centroids to each query vector\n
@@ -97,8 +101,13 @@ class Index:
         _, centroid_idxs = faiss.knn(self.xq, centroids, k)
         return centroid_idxs
     
-    def simulate_cache(self, cache: Cache, nprobe: int) -> None:
+    def simulate_cache(self, cache: Cache, nprobe: int) -> tuple[int, int]:
+        """ performs the simulation of disk reads using the cache passed in\n
+            returns the number of unique centroids and number of unique vectors accessed
+        """
         print("Starting simulation...")
+        print(f"\tIndex type: {self.index_type}")
+        print(f"\tCache type: {cache.to_string()}")
         centroid_idxs = self.find_nearest_centroids(nprobe).flatten()
         list_sizes = self.get_list_sizes()
         
@@ -106,8 +115,9 @@ class Index:
             cache.access_item(centroid)
 
         unique_centroids_accessed = np.unique(centroid_idxs)
-        unique_vectors_read = sum([list_sizes[x] for x in unique_centroids_accessed])
+        num_unique_vectors_read = sum([list_sizes[x] for x in unique_centroids_accessed])
         print('Simulation results:')
         print(f'\t{cache.num_hits()} cache hits')
         print(f'\t{cache.num_misses()} disk reads ({len(unique_centroids_accessed)} unavoidable)')
-        print(f'\t{cache.num_vectors_read()} vectors read from disk ({unique_vectors_read} unavoidable)')
+        print(f'\t{cache.num_vectors_read()} vectors read from disk ({num_unique_vectors_read} unavoidable)')
+        return len(unique_centroids_accessed), num_unique_vectors_read

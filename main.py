@@ -2,34 +2,39 @@ import utils
 import index
 from cache import LRUCache, PinCache
 import numpy as np
-import faiss.contrib.inspect_tools as tools
+from test_runner import TestRunner
 
 def main():
+    matrix = {
+        'sift': {
+            'n_clusters': [2048, 4096],
+            'caches': [
+                LRUCache(capacity=50000),
+                LRUCache(capacity=100000),
+                PinCache(capacity=100000, pincount=5)
+            ]
+        },
+        # 'glove-50': {
+        #     'n_clusters': [64, 128],
+        #     'caches': [
+        #         LRUCache(capacity=100000),
+        #         PinCache(capacity=100000, pincount=5)
+        #     ]
+        # },
+        # 'glove-100': {
+        #     'n_clusters': [2048, 4096],
+        #     'caches': [
+        #         LRUCache(capacity=100000),
+        #         PinCache(capacity=100000, pincount=5)
+        #     ]
+        # }
+    }
+    
+    runner = TestRunner(matrix, recall_target=0.9)
+    runner.run_testing_matrix()
+    runner.write_results('results.csv')
 
-    xt, xb, xq, gt = utils.get_sift()
-    xt, xb, xq, gt = utils.get_glove(25)
-
-    ind = index.Index("glove-25", "IVF1024,Flat", xt, xb, xq, gt)
-
-    nprobe = 16
-    cache_size = 100000
-
-    # cache_size is in "number of vectors"
-    cache = LRUCache(capacity=cache_size, list_sizes=ind.get_list_sizes())
-    # pincount is in "number of clusters"
-    cache = PinCache(capacity=cache_size, list_sizes=ind.get_list_sizes(), pincount=10)
-    ind.simulate_cache(cache=cache, nprobe=nprobe)
-
-    print("search_and_return_centroids...")
-    _query_centroid_ids, _result_centroid_ids, labels = ind.search_and_return_centroids(nprobe=nprobe)
-    ind.report_recall(labels)
-
-    print("standard search...")
-    labels = ind.search(nprobe=nprobe)
-    ind.report_recall(labels)
-
-
-    print("done")
+    print("Done")
     
     
 
