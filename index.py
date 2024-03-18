@@ -14,7 +14,7 @@ class Index:
             print(f"Training {index_type} index on {dataset}...")
             index.train(xt)
             index.add(xb)
-            print(f"Write indexes/{dataset}/{index_type}.addedindex")
+            print(f"Write indexes/{dataset}/{index_type}.index")
             if not os.path.exists(f'indexes/{dataset}'):
                 os.makedirs(f'indexes/{dataset}', exist_ok=True)
             faiss.write_index(index, f'indexes/{dataset}/{index_type}.index')
