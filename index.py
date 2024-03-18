@@ -3,21 +3,23 @@ import os
 from collections import Counter
 import numpy as np
 import numpy.typing as npt
+import time
 
 class Index:
 
-    def __init__(self, index_type: str, xt: npt.NDArray, xb: npt.NDArray, xq: npt.NDArray, gt: npt.NDArray):
+    def __init__(self, dataset: str, index_type: str, xt: npt.NDArray, xb: npt.NDArray, xq: npt.NDArray, gt: npt.NDArray):
         try:
-            index = faiss.read_index('indexes/' + index_type + '.index', faiss.IO_FLAG_MMAP)
+            index = faiss.read_index(f'indexes/{dataset}/{index_type}.index', faiss.IO_FLAG_MMAP)
         except:
             index = faiss.index_factory(xt.shape[1], index_type)
-            print(f"Training {index_type} index...")
+            print(f"Training {index_type} index on {dataset}...", time.clock_gettime())
             index.train(xt)
+            print("done training", time.clock_gettime())
             index.add(xb)
-            print("Write indexes/" + index_type + ".index")
-            if not os.path.exists('indexes'):
-                os.mkdir('indexes')
-            faiss.write_index(index, 'indexes/' + index_type + ".index")
+            print(f"Write indexes/{dataset}/{index_type}.index")
+            if not os.path.exists(f'indexes/{dataset}'):
+                os.mkdir(f'indexes/{dataset}')
+            faiss.write_index(index, f'indexes/{dataset}/{index_type}.index')
         
         self.index = index
         self.index_ivf = faiss.extract_index_ivf(index)
