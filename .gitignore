@@ -163,3 +163,5 @@ cython_debug/
 *.tar.gz
 indexes/
 sift/
+glove/
+matthew.py

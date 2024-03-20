@@ -36,10 +36,15 @@ def get_glove(dims: int) -> tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDA
         Returns (xt, sb, xq, gt). Downloads dataset if doesn't already exist locally \n
         dims argument should be one of [25, 50, 100, 200]
     """
+    dir = 'glove'
     filename = f'glove-{dims}-angular.hdf5'
-    if not os.path.exists(filename):
+    file_path = os.path.join(dir,filename)
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+    if not os.path.exists(file_path):
         print(f'Downloading glove data as {filename}...')
-        urllib.request.urlretrieve(f'http://ann-benchmarks.com/glove-{dims}-angular.hdf5', filename)
+        urllib.request.urlretrieve(f'http://ann-benchmarks.com/glove-{dims}-angular.hdf5', file_path)
+
     with h5py.File(filename, "r") as f:
         _distances = ['distances']
         neighbors = np.array(f['neighbors'])

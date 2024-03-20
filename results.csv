@@ -1,0 +1,7 @@
+dataset,index_description,cache_description,hits,misses,vectors_read,num_necessary_cluster_reads,num_necessary_vector_reads,recall,nprobe
+sift,"IVF2048,Flat",LRUCache (capacity=50000),8422,101578,58532255,2044,999973,0.9042,11
+sift,"IVF2048,Flat",LRUCache (capacity=100000),16003,93997,53400535,2044,999973,0.9042,11
+sift,"IVF2048,Flat","PinCache (capacity=100000, pincount=5)",15309,94696,53266848,2044,999973,0.9042,11
+sift,"IVF4096,Flat",LRUCache (capacity=50000),11983,138017,43738558,4056,999870,0.9026,15
+sift,"IVF4096,Flat",LRUCache (capacity=100000),22026,127974,39845147,4056,999870,0.9026,15
+sift,"IVF4096,Flat","PinCache (capacity=100000, pincount=5)",21418,128587,39741064,4056,999870,0.9026,15
