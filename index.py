@@ -7,10 +7,17 @@ from cache import Cache
 class Index:
 
     def __init__(self, dataset: str, index_type: str, xt: npt.NDArray, xb: npt.NDArray, xq: npt.NDArray, gt: npt.NDArray):
+        if dataset == 'sift':
+            distance_metric = faiss.METRIC_L2
+        elif dataset.startswith('glove'):
+            distance_metric = faiss.METRIC_INNER_PRODUCT
+            faiss.normalize_L2(xt)
+            faiss.normalize_L2(xb)
+            faiss.normalize_L2(xq)
         try:
             index = faiss.read_index(f'indexes/{dataset}/{index_type}.index', faiss.IO_FLAG_MMAP)
         except:
-            index = faiss.index_factory(xt.shape[1], index_type)
+            index = faiss.index_factory(xt.shape[1], index_type, distance_metric)
             print(f"Training {index_type} index on {dataset}...")
             index.train(xt)
             index.add(xb)
