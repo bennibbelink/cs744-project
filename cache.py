@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
+import random
 
 class Cache(ABC):
 
@@ -165,3 +166,56 @@ class PinCache(Cache):
         return f"PinCache (capacity={self.get_capacity()}, pincount={self.pincount})"
     
     
+class RandomCache(Cache):
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.list_sizes = None
+        self.centroids = np.empty(0)
+        self.hits = 0
+        self.misses = 0
+        self.vectors_read = 0
+
+    # must be run before using the cache!!
+    def setup(self, index):
+        self.list_sizes = index.get_list_sizes()
+
+    def reset(self):
+        self.list_sizes = None
+        self.centroids = np.empty(0)
+        self.hits = 0
+        self.misses = 0
+        self.vectors_read = 0
+        
+    def access_item(self, cid: int) -> None:
+        if cid in self.centroids: # cid is in cache
+            self.centroids = np.delete(self.centroids, np.where(self.centroids == cid))
+            self.hits += 1
+        else:
+            self.misses += 1
+            self.vectors_read += self.list_sizes[cid]
+            
+        # if cache will be too big keep trimming fat until we are under capacity
+        while self.get_size() + self.list_sizes[cid] > self.capacity:
+            ind_to_remove = random.randrange(len(self.centroids))
+            self.centroids = np.delete(self.centroids, ind_to_remove)
+            
+        # insert cid at the front of cache
+        self.centroids = np.insert(self.centroids, 0, cid)
+    
+    def get_capacity(self) -> int:
+        return self.capacity
+        
+    def get_size(self) -> int:
+        return sum([self.list_sizes[x] for x in self.centroids])
+    
+    def num_hits(self) -> int:
+        return self.hits
+    
+    def num_misses(self) -> int:
+        return self.misses
+    
+    def num_vectors_read(self) -> int:
+        return self.vectors_read
+    
+    def to_string(self) -> str:
+        return f"RandomCache (capacity={self.get_capacity()})"
