@@ -165,7 +165,12 @@ class TestRunner():
                 low = nprobe
             if high - low <= 1:
                 break
-        
+
+        if recall < self.recall_target:
+            nprobe += 1
+            labels = index.search(nprobe)
+            recall = index.report_recall(labels)
+            print(f'\tnprobe={nprobe}, recall={recall}')
         # manage our nprobe cache
         if index.dataset not in self.nprobe_cache:
             self.nprobe_cache[index.dataset] = {}
