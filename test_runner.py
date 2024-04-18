@@ -2,6 +2,8 @@ from index import Index
 from cache import Cache
 import utils
 import csv
+import os
+import json
 
 class Result():
 
@@ -51,7 +53,14 @@ class TestRunner():
         self.matrix = matrix
         self.recall_target = recall_target
         self.results = []
-        self.nprobe_cache = {} # to avoid recomputing nprobe for indexes
+        self.nprobe_cache = {}
+        if os.path.isfile('nprobe_cache.json'):
+            with open('nprobe_cache.json') as f:
+                self.nprobe_cache = json.load(f)
+            
+    def __del__(self):
+        with open('nprobe_cache.json', 'w') as f:
+            json.dump(self.nprobe_cache, f)
     
     def run_testing_matrix(self):
         for dataset in self.matrix.keys():
