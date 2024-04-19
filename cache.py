@@ -47,6 +47,7 @@ class LRUCache(Cache):
         self.capacity = capacity
         self.list_sizes = None
         self.centroids = np.empty(0)
+        self.size = 0
         self.hits = 0
         self.misses = 0
         self.vectors_read = 0
@@ -58,6 +59,7 @@ class LRUCache(Cache):
     def reset(self):
         self.list_sizes = None
         self.centroids = np.empty(0)
+        self.size = 0
         self.hits = 0
         self.misses = 0
         self.vectors_read = 0
@@ -65,6 +67,7 @@ class LRUCache(Cache):
     def access_item(self, cid: int) -> None:
         if cid in self.centroids: # cid is in cache
             self.centroids = np.delete(self.centroids, np.where(self.centroids == cid))
+            self.size -= self.list_sizes[cid] # need to remove the size here, since we add it back later
             self.hits += 1
         else:
             self.misses += 1
@@ -72,9 +75,11 @@ class LRUCache(Cache):
 
         # insert cid at the front of cache
         self.centroids = np.insert(self.centroids, 0, cid)
+        self.size += self.list_sizes[cid]
 
         # if cache is too big keep trimming fat until we are under capacity
-        while self.get_size() > self.capacity:
+        while self.size > self.capacity:
+            self.size -= self.list_sizes[self.centroids[-1]]
             self.centroids = self.centroids[:-1]
     
     def get_capacity(self) -> int:
@@ -101,6 +106,7 @@ class PinCache(Cache):
         self.capacity = capacity
         self.list_sizes = None
         self.pincount = pincount
+        self.size = 0
         self.hits = 0
         self.misses = 0
         self.vectors_read = 0
@@ -117,13 +123,14 @@ class PinCache(Cache):
         self.misses = self.pincount
         for cid in top_keys:
             self.vectors_read += self.list_sizes[cid]
-
         if self.get_size() > self.capacity:
             raise Exception('Error: Pinned clusters are larger than cache capacity')
+        self.size = self.get_size()
 
     def reset(self):
         self.list_sizes = None
         self.centroids = np.empty(0)
+        self.size = 0
         self.hits = 0
         self.misses = 0
         self.vectors_read = 0
@@ -135,6 +142,7 @@ class PinCache(Cache):
         elif cid in self.centroids: # cid is in cache but not pinned
             self.hits += 1
             self.centroids = np.delete(self.centroids, np.where(self.centroids == cid))
+            self.size -= self.list_sizes[cid] # need to remove the size here, since we add it back later
         else:
             self.misses += 1
             self.vectors_read += self.list_sizes[cid]
@@ -142,9 +150,11 @@ class PinCache(Cache):
         # if cid is not pinned, move it to the front of the cache (but still behind pinned cids)
         if cid not in self.centroids[:self.pincount]:
             self.centroids = np.insert(self.centroids, self.pincount, cid)
+            self.size += self.list_sizes[cid]
 
         # if cache is too big keep trimming fat until we are under capacity
-        while self.get_size() > self.capacity:
+        while self.size > self.capacity:
+            self.size -= self.list_sizes[self.centroids[-1]]
             self.centroids = self.centroids[:-1]
     
     def get_capacity(self) -> int:
@@ -171,6 +181,7 @@ class RandomCache(Cache):
         self.capacity = capacity
         self.list_sizes = None
         self.centroids = np.empty(0)
+        self.size = 0
         self.hits = 0
         self.misses = 0
         self.vectors_read = 0
@@ -182,6 +193,7 @@ class RandomCache(Cache):
     def reset(self):
         self.list_sizes = None
         self.centroids = np.empty(0)
+        self.size = 0
         self.hits = 0
         self.misses = 0
         self.vectors_read = 0
@@ -189,18 +201,21 @@ class RandomCache(Cache):
     def access_item(self, cid: int) -> None:
         if cid in self.centroids: # cid is in cache
             self.centroids = np.delete(self.centroids, np.where(self.centroids == cid))
+            self.size -= self.list_sizes[cid] # need to remove the size here, since we add it back later
             self.hits += 1
         else:
             self.misses += 1
             self.vectors_read += self.list_sizes[cid]
             
         # if cache will be too big keep trimming fat until we are under capacity
-        while self.get_size() + self.list_sizes[cid] > self.capacity:
+        while self.size + self.list_sizes[cid] > self.capacity:
             ind_to_remove = random.randrange(len(self.centroids))
+            self.size -= self.list_sizes[self.centroids[ind_to_remove]]
             self.centroids = np.delete(self.centroids, ind_to_remove)
             
         # insert cid at the front of cache
         self.centroids = np.insert(self.centroids, 0, cid)
+        self.size += self.list_sizes[cid]
     
     def get_capacity(self) -> int:
         return self.capacity
