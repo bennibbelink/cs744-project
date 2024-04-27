@@ -6,12 +6,20 @@ from test_runner import TestRunner
 
 def main():
     matrix = {
-        'sift': {
-            'n_clusters': [2048, 4096],
+        # 'sift': {
+        #     'n_clusters': [2048, 4096],
+        #     'caches': [
+        #         LRUCache(capacity=50000),
+        #         LRUCache(capacity=100000),
+        #         PinCache(capacity=100000, pincount=5)
+        #     ]
+        # },
+        'openai': {
+            'n_clusters': [2048],
             'caches': [
                 LRUCache(capacity=50000),
-                LRUCache(capacity=100000),
-                PinCache(capacity=100000, pincount=5)
+                # LRUCache(capacity=100000),
+                # PinCache(capacity=100000, pincount=5)
             ]
         },
         # 'glove-50': {

@@ -79,6 +79,8 @@ class TestRunner():
         elif dataset.startswith('glove'):
             n_dims = dataset.split('-')[1]
             xt, xb, xq, gt = utils.get_glove(n_dims)
+        elif dataset == 'openai':
+            xt, xb, xq, gt = utils.get_openai()
 
         ind = Index(dataset, f'IVF{n_clusters},Flat', xt, xb, xq, gt)
         nprobe = self.find_nprobe(ind)
