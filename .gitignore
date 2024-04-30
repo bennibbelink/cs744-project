@@ -163,3 +163,4 @@ cython_debug/
 *.tar.gz
 indexes/
 sift/
+dbpedia-entities-openai-1M/
