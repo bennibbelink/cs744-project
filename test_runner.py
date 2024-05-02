@@ -1,16 +1,20 @@
 from index import Index
-from cache import Cache
+from cache import Cache, PinCache
 import utils
 import csv
 import os
 import json
+import time
 
 class Result():
 
     def __init__(self, 
                 dataset,
                 index_description,
+                index_centroids,
                 cache_description,
+                cache_size,
+                pin_count,
                 hits, 
                 misses, 
                 vectors_read, 
@@ -21,7 +25,10 @@ class Result():
                 ):
         self.dataset = dataset
         self.index_description = index_description
+        self.index_centroids = index_centroids
         self.cache_description = cache_description
+        self.cache_size = cache_size
+        self.pin_count = pin_count
         self.hits = hits
         self.misses = misses
         self.vectors_read = vectors_read
@@ -34,7 +41,10 @@ class Result():
         return [
             self.dataset,
             self.index_description,
+            self.index_centroids,
             self.cache_description,
+            self.cache_size,
+            self.pin_count,
             self.hits,
             self.misses,
             self.vectors_read,
@@ -54,6 +64,7 @@ class TestRunner():
         self.recall_target = recall_target
         self.results = []
         self.nprobe_cache = {}
+        self.filename = ''
         if os.path.isfile('nprobe_cache.json'):
             with open('nprobe_cache.json') as f:
                 self.nprobe_cache = json.load(f)
@@ -63,13 +74,17 @@ class TestRunner():
             json.dump(self.nprobe_cache, f)
     
     def run_testing_matrix(self):
+        start_time = time.time()
         self.filename = f'results{start_time}.csv'
         with open(self.filename, 'a', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([
                 'dataset',
                 'index_description',
+                'index_centroids',
                 'cache_description',
+                'cache_size',
+                'pin_count',
                 'hits', 
                 'misses', 
                 'vectors_read', 
@@ -88,7 +103,7 @@ class TestRunner():
     def run_single_sim(self, 
                        dataset: str, 
                        n_clusters: int,
-                       cache: Cache
+                       cache: Cache,
                        ):
         if dataset == 'sift':
             xt, xb, xq, gt = utils.get_sift()
@@ -104,10 +119,18 @@ class TestRunner():
             u_centroids, u_vectors = ind.simulate_cache(cache, nprobe)
             labels = ind.search(nprobe)
             recall = ind.report_recall(labels)
+
+            pin_count = 0
+            if isinstance(cache, PinCache):
+                pin_count = cache.pincount
+
             result = Result(
                 dataset=dataset,
                 index_description=ind.index_type,
+                index_centroids=n_clusters,
                 cache_description=cache.to_string(),
+                cache_size=cache.capacity,
+                pin_count=pin_count,
                 hits=cache.num_hits(),
                 misses=cache.num_misses(),
                 vectors_read=cache.num_vectors_read(),
@@ -130,7 +153,10 @@ class TestRunner():
             writer.writerow([
                 'dataset',
                 'index_description',
+                'index_centroids',
                 'cache_description',
+                'cache_size',
+                'pin_count',
                 'hits', 
                 'misses', 
                 'vectors_read', 
