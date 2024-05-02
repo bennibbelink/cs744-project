@@ -63,6 +63,22 @@ class TestRunner():
             json.dump(self.nprobe_cache, f)
     
     def run_testing_matrix(self):
+        self.filename = f'results{start_time}.csv'
+        with open(self.filename, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([
+                'dataset',
+                'index_description',
+                'cache_description',
+                'hits', 
+                'misses', 
+                'vectors_read', 
+                'num_necessary_cluster_reads',
+                'num_necessary_vector_reads',
+                'recall',
+                'nprobe'
+            ])
+
         for dataset in self.matrix.keys():
             submatrix = self.matrix[dataset]
             for cluster_size in submatrix['n_clusters']:
@@ -100,7 +116,9 @@ class TestRunner():
                 recall=recall,
                 nprobe=nprobe
                 )
-            self.results.append(result)
+            with open(self.filename, 'a', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(result.to_row())
         except:
             print("Exception occured in simulation, likely due to pincount")
             result = Result(ind.index_type, cache.to_string(), 0, 0, 0, 0, 0, 0, 0)

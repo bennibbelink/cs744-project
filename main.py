@@ -32,7 +32,7 @@ def main():
     
     runner = TestRunner(matrix, recall_target=0.9)
     runner.run_testing_matrix()
-    runner.write_results('results.csv')
+    # runner.write_results('results.csv')
 
     print("Done")
     
