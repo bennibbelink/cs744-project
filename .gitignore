@@ -163,3 +163,10 @@ cython_debug/
 *.tar.gz
 indexes/
 sift/
+glove-25-angular.hdf5
+indexes
+nprobe_cache.json
+results.csv
+glove-200-angular.hdf5
+results*.csv
+.vscode/launch.json
