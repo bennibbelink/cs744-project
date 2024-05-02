@@ -208,14 +208,15 @@ class RandomCache(Cache):
             self.vectors_read += self.list_sizes[cid]
             
         # if cache will be too big keep trimming fat until we are under capacity
-        while self.size + self.list_sizes[cid] > self.capacity:
-            ind_to_remove = random.randrange(len(self.centroids))
-            self.size -= self.list_sizes[self.centroids[ind_to_remove]]
-            self.centroids = np.delete(self.centroids, ind_to_remove)
+        if self.capacity > 0:
+            while self.size + self.list_sizes[cid] > self.capacity:
+                ind_to_remove = random.randrange(len(self.centroids))
+                self.size -= self.list_sizes[self.centroids[ind_to_remove]]
+                self.centroids = np.delete(self.centroids, ind_to_remove)
             
-        # insert cid at the front of cache
-        self.centroids = np.insert(self.centroids, 0, cid)
-        self.size += self.list_sizes[cid]
+            # insert cid at the front of cache
+            self.centroids = np.insert(self.centroids, 0, cid)
+            self.size += self.list_sizes[cid]
     
     def get_capacity(self) -> int:
         return self.capacity
